@@ -1,7 +1,7 @@
 'use client'
 
 import { BraceletItem } from '@/types/bracelet'
-import { ShoppingCart } from 'lucide-react'
+import { CreditCard } from 'lucide-react'
 import { WearingStyle } from './WristSizeModal'
 import { useMemo } from 'react'
 
@@ -11,6 +11,7 @@ interface PriceDisplayProps {
   onAddToCart: () => void
   wristSize: number | null
   wearingStyle: WearingStyle | null
+  paying?: boolean
 }
 
 export default function PriceDisplay({
@@ -19,6 +20,7 @@ export default function PriceDisplay({
   onAddToCart,
   wristSize,
   wearingStyle,
+  paying = false,
 }: PriceDisplayProps) {
   // 计算当前周长（厘米）
   const currentCircumference = useMemo(() => {
@@ -118,11 +120,11 @@ export default function PriceDisplay({
 
         <button
           onClick={onAddToCart}
-          disabled={items.length === 0}
+          disabled={items.length === 0 || paying}
           className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
         >
-          <ShoppingCart size={20} />
-          <span>加入购物车</span>
+          <CreditCard size={20} />
+          <span>{paying ? '跳转支付中...' : '立即支付'}</span>
         </button>
       </div>
     </div>

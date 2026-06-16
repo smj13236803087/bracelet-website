@@ -13,9 +13,7 @@ function verifyHmac(searchParams: URLSearchParams, clientSecret: string) {
   cloned.delete('hmac')
 
   // 2. 按键名排序并生成 query 字符串
-  const message = cloned
-    .entries()
-    .toArray()
+  const message = Array.from(cloned.entries())
     .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
     .map(([key, value]) => `${key}=${value}`)
     .join('&')

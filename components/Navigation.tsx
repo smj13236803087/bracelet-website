@@ -7,7 +7,7 @@ import { Home, Grid3x3, ShoppingCart, User } from 'lucide-react'
 const navItems = [
   { href: '/', label: '首页', icon: Home },
   { href: '/square', label: '广场', icon: Grid3x3 },
-  { href: '/cart', label: '购物车', icon: ShoppingCart },
+  { href: '/cart', label: '配方', icon: ShoppingCart },
   { href: '/profile', label: '我的', icon: User },
 ]
 

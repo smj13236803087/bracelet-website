@@ -19,6 +19,7 @@ export default function Workspace() {
   const [wristSize, setWristSize] = useState<number | null>(null)
   const [wearingStyle, setWearingStyle] = useState<WearingStyle | null>(null)
   const [saving, setSaving] = useState(false)
+  const [paying, setPaying] = useState(false)
   const [designName, setDesignName] = useState('')
   const [currentDesignId, setCurrentDesignId] = useState<string | null>(null)
 
@@ -75,7 +76,8 @@ export default function Workspace() {
     color: string,
     image?: string,
     diameter?: number,
-    weight?: number
+    weight?: number,
+    shopifyVariantId?: number
   ) => {
     if (!checkWristSizeLimit(diameter || 8)) {
       alert(`已达到设定手围！无法添加更多珠子。`)
@@ -93,6 +95,7 @@ export default function Workspace() {
       image: image,
       diameter: diameter,
       weight: weight,
+      shopifyVariantId,
     }
     setItems([...items, newItem])
   }
@@ -106,7 +109,8 @@ export default function Workspace() {
     color: string,
     image?: string,
     diameter?: number,
-    weight?: number
+    weight?: number,
+    shopifyVariantId?: number
   ) => {
     if (!checkWristSizeLimit(diameter || 8)) {
       alert(`已达到设定手围！无法添加更多配饰。`)
@@ -124,6 +128,7 @@ export default function Workspace() {
       image: image,
       diameter: diameter,
       weight: weight,
+      shopifyVariantId,
     }
     setItems([...items, newItem])
   }
@@ -135,7 +140,8 @@ export default function Workspace() {
     color: string,
     image?: string,
     diameter?: number,
-    weight?: number
+    weight?: number,
+    shopifyVariantId?: number
   ) => {
     if (!checkWristSizeLimit(diameter || 8)) {
       alert(`已达到设定手围！无法添加更多吊坠。`)
@@ -152,6 +158,7 @@ export default function Workspace() {
       image: image,
       diameter: diameter,
       weight: weight,
+      shopifyVariantId,
     }
     setItems([...items, newItem])
   }
@@ -166,10 +173,49 @@ export default function Workspace() {
     setItems(newItems)
   }
 
-  // 加入购物车（占位）
-  const handleAddToCart = () => {
-    console.log('加入购物车:', items)
-    alert('已加入购物车！')
+  const handleAddToCart = async () => {
+    if (!items.length) {
+      alert('请先设计手串再支付～')
+      return
+    }
+    if (!wristSize || !wearingStyle) {
+      alert('请先完成手腕尺寸设置～')
+      setShowWristSizeModal(true)
+      return
+    }
+
+    setPaying(true)
+    try {
+      const res = await fetch('/api/shopify/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          totalPrice,
+          wristSize,
+          wearingStyle,
+          designName: designName.trim() || undefined,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || '创建支付链接失败，请稍后重试')
+        return
+      }
+
+      if (!data.checkoutUrl) {
+        alert('未获取到支付链接，请稍后重试')
+        return
+      }
+
+      window.location.href = data.checkoutUrl
+    } catch (e) {
+      console.error('立即支付失败：', e)
+      alert('支付跳转失败，请检查网络后重试')
+    } finally {
+      setPaying(false)
+    }
   }
 
   // 计算总重量 / 平均直径，方便存数据库
@@ -284,6 +330,7 @@ export default function Workspace() {
               onAddToCart={handleAddToCart}
               wristSize={wristSize}
               wearingStyle={wearingStyle}
+              paying={paying}
             />
             <div className="mt-4 space-y-2">
               <div>

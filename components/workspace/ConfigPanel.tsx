@@ -23,7 +23,8 @@ interface ConfigPanelProps {
     color: string,
     image?: string,
     diameter?: number,
-    weight?: number
+    weight?: number,
+    shopifyVariantId?: number
   ) => void
   onAddAccessory: (
     category: AccessoryCategory,
@@ -33,7 +34,8 @@ interface ConfigPanelProps {
     color: string,
     image?: string,
     diameter?: number,
-    weight?: number
+    weight?: number,
+    shopifyVariantId?: number
   ) => void
   onAddPendant: (
     name: string,
@@ -41,7 +43,8 @@ interface ConfigPanelProps {
     color: string,
     image?: string,
     diameter?: number,
-    weight?: number
+    weight?: number,
+    shopifyVariantId?: number
   ) => void
 }
 
@@ -123,6 +126,7 @@ export default function ConfigPanel({
     const weightStr = getProductWeight(product)
     const diameter = diameterStr ? parseDiameter(diameterStr) : undefined
     const weight = weightStr ? parseWeight(weightStr) : undefined
+    const shopifyVariantId = product.variants?.[0]?.id
 
     onAddBead(
       selectedBeadCategory,
@@ -132,7 +136,8 @@ export default function ConfigPanel({
       '#8b4513', // 默认颜色，可以从商品图片提取或使用占位色
       image,
       diameter,
-      weight
+      weight,
+      shopifyVariantId
     )
     resetBeadSelection()
   }
@@ -153,6 +158,7 @@ export default function ConfigPanel({
     const weightStr = getProductWeight(product)
     const diameter = diameterStr ? parseDiameter(diameterStr) : undefined
     const weight = weightStr ? parseWeight(weightStr) : undefined
+    const shopifyVariantId = product.variants?.[0]?.id
 
     onAddAccessory(
       selectedAccessoryCategory,
@@ -162,7 +168,8 @@ export default function ConfigPanel({
       '#8b4513',
       image,
       diameter,
-      weight
+      weight,
+      shopifyVariantId
     )
     resetAccessorySelection()
   }
@@ -175,8 +182,9 @@ export default function ConfigPanel({
     const weightStr = getProductWeight(product)
     const diameter = diameterStr ? parseDiameter(diameterStr) : undefined
     const weight = weightStr ? parseWeight(weightStr) : undefined
+    const shopifyVariantId = product.variants?.[0]?.id
 
-    onAddPendant(product.title, price, '#8b4513', image, diameter, weight)
+    onAddPendant(product.title, price, '#8b4513', image, diameter, weight, shopifyVariantId)
   }
 
   if (loading) {

@@ -30,6 +30,8 @@ export interface BraceletItem {
   // 尺寸信息（毫米）
   diameter?: number // 直径（毫米）
   weight?: number // 重量（克）
+  // Shopify 变体 ID（结账用）
+  shopifyVariantId?: number
 }
 
 // 手串配置
