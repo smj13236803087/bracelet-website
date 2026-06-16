@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { Suspense, useState, useMemo, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BraceletItem, BeadCategory, AccessoryCategory } from '@/types/bracelet'
 import { calculateTotalPrice, generateId } from '@/lib/pricing/calculator'
@@ -9,7 +9,21 @@ import BraceletPreview from '@/components/workspace/BraceletPreview'
 import PriceDisplay from '@/components/workspace/PriceDisplay'
 import WristSizeModal, { WearingStyle } from '@/components/workspace/WristSizeModal'
 
-export default function Workspace() {
+export default function WorkspacePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="pt-16 min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-gray-500">加载中...</div>
+        </main>
+      }
+    >
+      <Workspace />
+    </Suspense>
+  )
+}
+
+function Workspace() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const designIdFromUrl = searchParams.get('designId')
