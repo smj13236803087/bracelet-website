@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 const STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN
 const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN
 const API_VERSION = process.env.SHOPIFY_API_VERSION || '2024-01'

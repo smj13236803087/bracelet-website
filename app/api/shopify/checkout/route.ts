@@ -5,6 +5,8 @@ import { ShopifyAdminError } from '@/lib/shopify/admin-client'
 import { createBraceletDraftOrder } from '@/lib/shopify/draft-order'
 import { createBraceletStorefrontCheckout } from '@/lib/shopify/storefront-checkout'
 
+export const dynamic = 'force-dynamic'
+
 interface CheckoutBody {
   items?: BraceletItem[]
   totalPrice?: number
