@@ -157,11 +157,11 @@ export default function OrderDetailPage() {
 
             {order.trackingEvents.length > 0 ? (
               <div className="space-y-4">
-                {order.trackingEvents.map((event, index) => (
+                {[...order.trackingEvents].reverse().map((event, index, list) => (
                   <div key={`${event.happenedAt}-${index}`} className="flex gap-3">
                     <div className="flex flex-col items-center">
                       <div className="w-3 h-3 rounded-full bg-blue-600" />
-                      {index < order.trackingEvents.length - 1 && (
+                      {index < list.length - 1 && (
                         <div className="w-px flex-1 bg-gray-200 mt-1" />
                       )}
                     </div>

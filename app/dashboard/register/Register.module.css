@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+  padding: 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+}
+
+.form {
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.submitButton {
+  width: 100%;
+}
+
+.codeRow {
+  display: flex;
+  gap: 8px;
+}
+
+.codeInput {
+  flex: 1;
+}
+
+.helper {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8c8c8c;
+}

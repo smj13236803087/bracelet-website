@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma'
 import { requireSessionUser } from '@/lib/auth-server'
 import { toOrderDetail } from '@/lib/orders/order-utils'
 import {
-  fetchOrderTrackingEvents,
+  fetchShopifyTrackingSnapshot,
   refreshOrderFromShopify,
 } from '@/lib/shopify/order-sync'
 
@@ -39,17 +39,21 @@ export async function GET(
     }
   }
 
-  if (order.status === 'PENDING_RECEIPT' && order.shopifyOrderId) {
+  if (
+    order.shopifyOrderId &&
+    (order.status === 'PENDING_RECEIPT' || order.status === 'COMPLETED')
+  ) {
     try {
-      const trackingEvents = await fetchOrderTrackingEvents(order)
-      if (trackingEvents.length > 0) {
-        order = await prisma.order.update({
-          where: { id: order.id },
-          data: {
-            trackingEvents: trackingEvents as unknown as Prisma.InputJsonValue,
-          },
-        })
-      }
+      const snapshot = await fetchShopifyTrackingSnapshot(order)
+      order = await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          carrier: snapshot.carrier ?? order.carrier,
+          trackingNumber: snapshot.trackingNumber ?? order.trackingNumber,
+          trackingUrl: snapshot.trackingUrl ?? order.trackingUrl,
+          trackingEvents: snapshot.trackingEvents as unknown as Prisma.InputJsonValue,
+        },
+      })
     } catch (error) {
       console.error('拉取物流轨迹失败：', order.id, error)
     }

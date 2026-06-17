@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const pending = await prisma.pendingUser.findUnique({ where: { email } })
-    if (!pending) {
+    if (!pending || pending.role !== 'USER') {
       return NextResponse.json({ error: '验证码已失效，请重新获取' }, { status: 400 })
     }
     if (pending.expiresAt.getTime() < Date.now()) {
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
         email,
         password: pending.password,
         name: pending.name,
+        role: 'USER',
         shopifyEmail: email,
       },
     })

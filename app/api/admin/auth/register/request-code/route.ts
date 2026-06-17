@@ -7,6 +7,8 @@ import { sendVerificationCodeEmail } from '@/lib/mailer'
 const CODE_TTL_SEC = 10 * 60
 const RESEND_COOLDOWN_SEC = 60
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as {
@@ -20,27 +22,39 @@ export async function POST(req: NextRequest) {
     const password = body.password || ''
 
     if (!email || !isValidEmail(email)) {
-      return NextResponse.json({ error: '邮箱格式不正确' }, { status: 400 })
+      return NextResponse.json(
+        { errno: 400, errmsg: '邮箱格式不正确', data: null },
+        { status: 200 }
+      )
     }
     if (!name) {
-      return NextResponse.json({ error: '姓名不能为空' }, { status: 400 })
+      return NextResponse.json(
+        { errno: 400, errmsg: '姓名不能为空', data: null },
+        { status: 200 }
+      )
     }
     if (!password || password.length < 8) {
-      return NextResponse.json({ error: '密码长度至少 8 位' }, { status: 400 })
-    }
-
-    const cooldownKey = `register:cooldown:${email}`
-    const ttl = await redis.ttl(cooldownKey)
-    if (ttl > 0) {
       return NextResponse.json(
-        { error: '发送过于频繁', retryAfterSeconds: ttl },
-        { status: 429 }
+        { errno: 400, errmsg: '密码长度至少 8 位', data: null },
+        { status: 200 }
       )
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } })
-    if (existingUser) {
-      return NextResponse.json({ error: '该邮箱已注册' }, { status: 409 })
+    const cooldownKey = `admin-register:cooldown:${email}`
+    const ttl = await redis.ttl(cooldownKey)
+    if (ttl > 0) {
+      return NextResponse.json(
+        { errno: 429, errmsg: `发送过于频繁，请 ${ttl} 秒后重试`, data: null },
+        { status: 200 }
+      )
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } })
+    if (existing) {
+      return NextResponse.json(
+        { errno: 409, errmsg: '该邮箱已注册', data: null },
+        { status: 200 }
+      )
     }
 
     const code = generate6DigitCode()
@@ -53,34 +67,31 @@ export async function POST(req: NextRequest) {
         email,
         name,
         password: passwordHash,
-        role: 'USER',
+        role: 'SUPER_ADMIN',
         verificationCode: code,
         expiresAt,
       },
       update: {
         name,
         password: passwordHash,
-        role: 'USER',
+        role: 'SUPER_ADMIN',
         verificationCode: code,
         expiresAt,
       },
     })
 
     await sendVerificationCodeEmail({ to: email, code, purpose: 'register' })
-
-    // 60s 冷却
     await redis.set(cooldownKey, '1', 'EX', RESEND_COOLDOWN_SEC)
 
     return NextResponse.json(
-      { message: '验证码已发送', expiresInSeconds: CODE_TTL_SEC },
+      { errno: 0, errmsg: '', data: { expiresInSeconds: CODE_TTL_SEC } },
       { status: 200 }
     )
   } catch (err) {
-    console.error('注册发送验证码失败：', err)
+    console.error('后台注册发送验证码失败：', err)
     return NextResponse.json(
-      { error: '发送验证码失败', detail: String(err) },
-      { status: 500 }
+      { errno: 500, errmsg: '发送验证码失败', data: null },
+      { status: 200 }
     )
   }
 }
-

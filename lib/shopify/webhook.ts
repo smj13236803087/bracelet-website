@@ -19,5 +19,12 @@ export function verifyShopifyWebhook(
 }
 
 export function toShopifyOrderGid(orderId: number | string): string {
-  return `gid://shopify/Order/${orderId}`
+  const id = String(orderId).trim()
+  if (!id) {
+    throw new Error('无效的 Shopify 订单 ID')
+  }
+  if (id.startsWith('gid://')) {
+    return id
+  }
+  return `gid://shopify/Order/${id}`
 }
