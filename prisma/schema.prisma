@@ -6,22 +6,36 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql" // 可以改为 "mysql" 或 "sqlite" 根据你的数据库类型
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id               String   @id @default(cuid())
-  email            String   @unique
-  password         String   // 存储加密后的密码
-  name             String?
-  shopifyCustomerId String? @unique // Shopify 客户 ID，用于同步
-  shopifyEmail    String?  // Shopify 客户邮箱（用于匹配）
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+enum OrderStatus {
+  PENDING_PAYMENT
+  PENDING_SHIPMENT
+  PENDING_RECEIPT
+  COMPLETED
+  CANCELLED
+}
 
-  // 关联：用户的手串作品集
-  braceletDesigns  BraceletDesign[]
+enum ShopifySyncStatus {
+  PENDING
+  SYNCED
+  FAILED
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String
+  name              String?
+  shopifyCustomerId String?  @unique
+  shopifyEmail      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  braceletDesigns BraceletDesign[]
+  orders          Order[]
 
   @@map("users")
 }
@@ -42,16 +56,49 @@ model BraceletDesign {
   id              String   @id @default(cuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id])
-  name            String   // 作品名称
-  totalPrice      Float    // 总价格
-  totalWeight     Float?   // 总重量（克）
-  averageDiameter Float?   // 平均直径（毫米）
-  wristSize       Float?   // 设计时的手围（厘米）
-  wearingStyle    String?  // single / double
-  items           Json     // BraceletItem[]，包含顺序和位置
+  name            String
+  totalPrice      Float
+  totalWeight     Float?
+  averageDiameter Float?
+  wristSize       Float?
+  wearingStyle    String?
+  items           Json
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([userId])
   @@map("bracelet_designs")
+}
+
+model Order {
+  id                  String            @id @default(cuid())
+  userId              String
+  user                User              @relation(fields: [userId], references: [id])
+  orderNo             String            @unique
+  status              OrderStatus       @default(PENDING_PAYMENT)
+  designName          String?
+  items               Json
+  totalPrice          Float
+  wristSize           Float?
+  wearingStyle        String?
+  shopifyDraftOrderId String?
+  shopifyOrderId      String?           @unique
+  shopifyOrderName    String?
+  shopifyCheckoutUrl  String?           @db.Text
+  shopifySyncStatus   ShopifySyncStatus @default(PENDING)
+  shopifySyncError    String?           @db.Text
+  carrier             String?
+  trackingNumber      String?
+  trackingUrl         String?           @db.Text
+  trackingEvents      Json?
+  paidAt              DateTime?
+  shippedAt           DateTime?
+  receivedAt          DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([shopifyDraftOrderId])
+  @@map("orders")
 }

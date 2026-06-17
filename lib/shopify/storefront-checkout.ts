@@ -79,6 +79,10 @@ export async function createBraceletStorefrontCheckout(
     { key: 'design_json', value: buildDesignSnapshot(input) },
   ]
 
+  if (input.localOrderId) {
+    attributes.push({ key: 'local_order_id', value: input.localOrderId })
+  }
+
   if (input.designName?.trim()) {
     attributes.push({ key: 'design_name', value: input.designName.trim() })
   }
@@ -89,7 +93,13 @@ export async function createBraceletStorefrontCheckout(
       userErrors: Array<{ field: string[] | null; message: string }>
     }
   }>(CART_CREATE, {
-    input: { lines, attributes },
+    input: {
+      lines,
+      attributes,
+      ...(input.customerEmail
+        ? { buyerIdentity: { email: input.customerEmail } }
+        : {}),
+    },
   })
 
   const result = data.cartCreate

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BraceletItem } from '@/types/bracelet'
 import { WearingStyle } from '@/components/workspace/WristSizeModal'
+import { requireSessionUser } from '@/lib/auth-server'
+import { createLocalOrderAndSyncShopify } from '@/lib/orders/create-order'
 import { ShopifyAdminError } from '@/lib/shopify/admin-client'
-import { createBraceletDraftOrder } from '@/lib/shopify/draft-order'
-import { createBraceletStorefrontCheckout } from '@/lib/shopify/storefront-checkout'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,13 +19,14 @@ function isWearingStyle(value: unknown): value is WearingStyle {
   return value === 'single' || value === 'double'
 }
 
-function isDraftOrderAccessDenied(error: unknown): boolean {
-  if (!(error instanceof ShopifyAdminError)) return false
-  const msg = error.message.toLowerCase()
-  return msg.includes('access denied') || msg.includes('write_draft_orders')
-}
-
 export async function POST(req: NextRequest) {
+  let user
+  try {
+    user = await requireSessionUser()
+  } catch {
+    return NextResponse.json({ error: '请先登录后再支付' }, { status: 401 })
+  }
+
   let body: CheckoutBody
   try {
     body = await req.json()
@@ -66,24 +67,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    let result
-    try {
-      result = await createBraceletDraftOrder(checkoutInput)
-    } catch (error) {
-      if (isDraftOrderAccessDenied(error)) {
-        result = await createBraceletStorefrontCheckout(checkoutInput)
-      } else {
-        throw error
-      }
-    }
+    const { order, checkoutUrl } = await createLocalOrderAndSyncShopify(
+      user.id,
+      user.email,
+      checkoutInput
+    )
 
     return NextResponse.json({
-      checkoutUrl: result.checkoutUrl,
-      draftOrderId: result.draftOrderId,
-      draftOrderName: result.draftOrderName,
+      checkoutUrl,
+      orderId: order.id,
+      orderNo: order.orderNo,
     })
   } catch (error) {
-    console.error('创建 Shopify 结账失败：', error)
+    console.error('创建订单/结账失败：', error)
 
     if (error instanceof ShopifyAdminError) {
       const message = error.message

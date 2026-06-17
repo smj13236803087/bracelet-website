@@ -11,6 +11,7 @@ import {
   Loader2,
   AlertCircle,
   Sparkles,
+  ClipboardList,
 } from 'lucide-react'
 
 type User = {
@@ -42,6 +43,11 @@ export default function Profile() {
       }
       const data = await res.json()
       setUser(data.user)
+      if (data.user) {
+        fetch('/api/orders/sync', { method: 'POST' }).catch((err) => {
+          console.error('同步订单状态失败：', err)
+        })
+      }
     } catch (err) {
       setError('获取用户信息失败')
       console.error(err)
@@ -168,6 +174,25 @@ export default function Profile() {
 
         {/* 功能区 */}
         <div className="grid md:grid-cols-2 gap-6">
+          <button
+            onClick={() => router.push('/orders')}
+            className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/20 flex items-center justify-between hover:shadow-2xl hover:-translate-y-1 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                <ClipboardList className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <div className="text-base font-semibold text-gray-900">
+                  我的订单
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  查看待支付、待发货、待收货订单和物流轨迹
+                </div>
+              </div>
+            </div>
+          </button>
+
           <button
             onClick={() => router.push('/portfolio')}
             className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/20 flex items-center justify-between hover:shadow-2xl hover:-translate-y-1 transition-all"

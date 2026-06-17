@@ -198,6 +198,15 @@ function Workspace() {
       return
     }
 
+    const meRes = await fetch('/api/auth/me')
+    const meData = await meRes.json()
+    if (!meData.user) {
+      if (confirm('支付前需要先登录，是否前往登录？')) {
+        router.push('/login')
+      }
+      return
+    }
+
     setPaying(true)
     try {
       const res = await fetch('/api/shopify/checkout', {

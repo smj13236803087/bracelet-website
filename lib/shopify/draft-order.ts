@@ -8,6 +8,8 @@ export interface CreateBraceletCheckoutInput {
   wristSize: number
   wearingStyle: WearingStyle
   designName?: string
+  localOrderId?: string
+  customerEmail?: string
 }
 
 export interface BraceletCheckoutResult {
@@ -97,6 +99,9 @@ export async function createBraceletDraftOrder(
     { key: 'wearing_style', value: input.wearingStyle },
     { key: 'design_json', value: buildDesignSnapshot(input) },
   ]
+  if (input.localOrderId) {
+    customAttributes.push({ key: 'local_order_id', value: input.localOrderId })
+  }
   if (input.designName?.trim()) {
     customAttributes.push({
       key: 'design_name',
@@ -120,6 +125,7 @@ export async function createBraceletDraftOrder(
       note: buildOrderNote(input),
       customAttributes,
       tags: ['diy-bracelet', 'bracelet-website'],
+      ...(input.customerEmail ? { email: input.customerEmail } : {}),
     },
   })
 
