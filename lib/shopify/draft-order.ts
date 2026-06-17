@@ -1,6 +1,8 @@
 import { BraceletItem } from '@/types/bracelet'
 import { WearingStyle } from '@/components/workspace/WristSizeModal'
 import { shopifyAdminGraphql } from './admin-client'
+import { buildDraftOrderShippingLine } from './shipping-config'
+import { toVariantGid } from './storefront-client'
 
 export interface CreateBraceletCheckoutInput {
   items: BraceletItem[]
@@ -71,6 +73,8 @@ function buildDesignSnapshot(input: CreateBraceletCheckoutInput): string {
 export async function createBraceletDraftOrder(
   input: CreateBraceletCheckoutInput
 ): Promise<BraceletCheckoutResult> {
+  const allHaveVariants = input.items.every((item) => item.shopifyVariantId)
+
   const lineItems = input.items.map((item) => {
     const customAttributes: Array<{ key: string; value: string }> = [
       { key: 'item_type', value: item.type },
@@ -85,10 +89,20 @@ export async function createBraceletDraftOrder(
       customAttributes.push({ key: 'weight_g', value: String(item.weight) })
     }
 
+    if (allHaveVariants && item.shopifyVariantId) {
+      return {
+        variantId: toVariantGid(item.shopifyVariantId),
+        quantity: 1,
+        requiresShipping: true,
+        customAttributes,
+      }
+    }
+
     return {
       quantity: 1,
       title: item.name,
       originalUnitPrice: item.price.toFixed(2),
+      requiresShipping: true,
       customAttributes,
     }
   })
@@ -124,6 +138,7 @@ export async function createBraceletDraftOrder(
       lineItems,
       note: buildOrderNote(input),
       customAttributes,
+      shippingLine: buildDraftOrderShippingLine(),
       tags: ['diy-bracelet', 'bracelet-website'],
       ...(input.customerEmail ? { email: input.customerEmail } : {}),
     },

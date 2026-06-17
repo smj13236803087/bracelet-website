@@ -2,8 +2,20 @@ import { shopifyAdminGraphql, ShopifyAdminError } from '@/lib/shopify/admin-clie
 import { toShopifyOrderGid } from '@/lib/shopify/webhook'
 
 const ORDER_CANCEL_MUTATION = `
-  mutation orderCancel($orderId: ID!, $notifyCustomer: Boolean, $refund: Boolean, $reason: OrderCancelReason!, $restock: Boolean) {
-    orderCancel(orderId: $orderId, notifyCustomer: $notifyCustomer, refund: $refund, reason: $reason, restock: $restock) {
+  mutation orderCancel(
+    $orderId: ID!
+    $notifyCustomer: Boolean
+    $refundMethod: OrderCancelRefundMethodInput!
+    $restock: Boolean!
+    $reason: OrderCancelReason!
+  ) {
+    orderCancel(
+      orderId: $orderId
+      notifyCustomer: $notifyCustomer
+      refundMethod: $refundMethod
+      restock: $restock
+      reason: $reason
+    ) {
       job {
         id
       }
@@ -19,10 +31,11 @@ const ORDER_CANCEL_MUTATION = `
 const ORDER_DELETE_MUTATION = `
   mutation orderDelete($orderId: ID!) {
     orderDelete(orderId: $orderId) {
-      deletedOrderId
+      deletedId
       userErrors {
         field
         message
+        code
       }
     }
   }
@@ -53,7 +66,7 @@ async function cancelShopifyOrder(shopifyOrderId: string) {
   }>(ORDER_CANCEL_MUTATION, {
     orderId: toShopifyOrderGid(shopifyOrderId),
     notifyCustomer: false,
-    refund: true,
+    refundMethod: { originalPaymentMethodsRefund: false },
     reason: 'OTHER',
     restock: true,
   })
@@ -72,8 +85,8 @@ async function cancelShopifyOrder(shopifyOrderId: string) {
 async function deleteShopifyOrder(shopifyOrderId: string) {
   const data = await shopifyAdminGraphql<{
     orderDelete: {
-      deletedOrderId: string | null
-      userErrors: Array<{ message: string }>
+      deletedId: string | null
+      userErrors: Array<{ message: string; code?: string }>
     }
   }>(ORDER_DELETE_MUTATION, {
     orderId: toShopifyOrderGid(shopifyOrderId),

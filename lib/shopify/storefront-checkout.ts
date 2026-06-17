@@ -5,6 +5,7 @@ import {
   toVariantGid,
 } from './storefront-client'
 import { CreateBraceletCheckoutInput, BraceletCheckoutResult } from './draft-order'
+import { FLAT_SHIPPING_FEE } from './shipping-config'
 
 const CART_CREATE = `
   mutation cartCreate($input: CartInput!) {
@@ -68,8 +69,17 @@ export async function createBraceletStorefrontCheckout(
 ): Promise<BraceletCheckoutResult> {
   const lines = groupCartLines(input.items)
 
+  const shippingVariantId = process.env.SHOPIFY_SHIPPING_VARIANT_ID?.trim()
+  if (shippingVariantId) {
+    const shippingGid = shippingVariantId.startsWith('gid://')
+      ? shippingVariantId
+      : toVariantGid(Number(shippingVariantId))
+    lines.push({ merchandiseId: shippingGid, quantity: 1 })
+  }
+
   const attributes: Array<{ key: string; value: string }> = [
     { key: 'source', value: 'bracelet-website' },
+    { key: 'flat_shipping_fee', value: String(FLAT_SHIPPING_FEE) },
     { key: 'wrist_size_cm', value: String(input.wristSize) },
     { key: 'wearing_style', value: input.wearingStyle },
     {
